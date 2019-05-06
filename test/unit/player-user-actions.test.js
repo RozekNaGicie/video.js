@@ -1,4 +1,5 @@
 /* eslint-env qunit */
+import document from 'global/document';
 import keycode from 'keycode';
 import sinon from 'sinon';
 import TestHelpers from './test-helpers';
@@ -158,7 +159,7 @@ const mockKeyDownEvent = (key) => {
   };
 };
 
-const executeKeyTest = {
+const defaultKeyTests = {
   fullscreen(player, assert, positive) {
     let fullscreen;
 
@@ -271,9 +272,9 @@ const executeKeyTest = {
 
 QUnit.test('by default, hotkeys are disabled', function(assert) {
   assert.expect(14);
-  executeKeyTest.fullscreen(this.player, assert, false);
-  executeKeyTest.mute(this.player, assert, false);
-  executeKeyTest.playPause(this.player, assert, false);
+  defaultKeyTests.fullscreen(this.player, assert, false);
+  defaultKeyTests.mute(this.player, assert, false);
+  defaultKeyTests.playPause(this.player, assert, false);
 });
 
 QUnit.test('when userActions.hotkeys is true, hotkeys are enabled', function(assert) {
@@ -285,9 +286,9 @@ QUnit.test('when userActions.hotkeys is true, hotkeys are enabled', function(ass
   });
 
   assert.expect(16);
-  executeKeyTest.fullscreen(this.player, assert, true);
-  executeKeyTest.mute(this.player, assert, true);
-  executeKeyTest.playPause(this.player, assert, true);
+  defaultKeyTests.fullscreen(this.player, assert, true);
+  defaultKeyTests.mute(this.player, assert, true);
+  defaultKeyTests.playPause(this.player, assert, true);
 });
 
 QUnit.test('when userActions.hotkeys is an object, hotkeys are enabled', function(assert) {
@@ -299,9 +300,9 @@ QUnit.test('when userActions.hotkeys is an object, hotkeys are enabled', functio
   });
 
   assert.expect(16);
-  executeKeyTest.fullscreen(this.player, assert, true);
-  executeKeyTest.mute(this.player, assert, true);
-  executeKeyTest.playPause(this.player, assert, true);
+  defaultKeyTests.fullscreen(this.player, assert, true);
+  defaultKeyTests.mute(this.player, assert, true);
+  defaultKeyTests.playPause(this.player, assert, true);
 });
 
 QUnit.test('when userActions.hotkeys.fullscreenKey can be a function', function(assert) {
@@ -405,4 +406,82 @@ QUnit.test('when userActions.hotkeys.playPauseKey can be a function', function(a
 
   assert.strictEqual(this.player.pause.callCount, 1, 'has paused');
   assert.strictEqual(this.player.play.callCount, 1, 'has played');
+});
+
+QUnit.test('hotkeys are ignored when focus is in a textarea', function(assert) {
+  this.player = TestHelpers.makePlayer({
+    controls: true,
+    userActions: {
+      hotkeys: true
+    }
+  });
+
+  const textarea = document.createElement('textarea');
+
+  this.player.el_.appendChild(textarea);
+  textarea.focus();
+
+  assert.expect(14);
+  defaultKeyTests.fullscreen(this.player, assert, false);
+  defaultKeyTests.mute(this.player, assert, false);
+  defaultKeyTests.playPause(this.player, assert, false);
+});
+
+QUnit.test('hotkeys are ignored when focus is in a text input', function(assert) {
+  this.player = TestHelpers.makePlayer({
+    controls: true,
+    userActions: {
+      hotkeys: true
+    }
+  });
+
+  const input = document.createElement('input');
+
+  input.type = 'text';
+  this.player.el_.appendChild(input);
+  input.focus();
+
+  assert.expect(14);
+  defaultKeyTests.fullscreen(this.player, assert, false);
+  defaultKeyTests.mute(this.player, assert, false);
+  defaultKeyTests.playPause(this.player, assert, false);
+});
+
+QUnit.test('hotkeys are NOT ignored when focus is on a button element', function(assert) {
+  this.player = TestHelpers.makePlayer({
+    controls: true,
+    userActions: {
+      hotkeys: true
+    }
+  });
+
+  const button = document.createElement('button');
+
+  this.player.el_.appendChild(button);
+  button.focus();
+
+  assert.expect(16);
+  defaultKeyTests.fullscreen(this.player, assert, true);
+  defaultKeyTests.mute(this.player, assert, true);
+  defaultKeyTests.playPause(this.player, assert, true);
+});
+
+QUnit.test('hotkeys are NOT ignored when focus is on a button input', function(assert) {
+  this.player = TestHelpers.makePlayer({
+    controls: true,
+    userActions: {
+      hotkeys: true
+    }
+  });
+
+  const input = document.createElement('input');
+
+  input.type = 'button';
+  this.player.el_.appendChild(input);
+  input.focus();
+
+  assert.expect(16);
+  defaultKeyTests.fullscreen(this.player, assert, true);
+  defaultKeyTests.mute(this.player, assert, true);
+  defaultKeyTests.playPause(this.player, assert, true);
 });
